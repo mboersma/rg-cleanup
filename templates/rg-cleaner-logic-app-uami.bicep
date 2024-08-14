@@ -8,12 +8,13 @@ param aci string = 'aci'
 param dryrun bool = true
 param ttl string = ''
 param regex string = ''
+param role_assignments bool = true
 param csubscription string = subscription().subscriptionId
 param location string = resourceGroup().location
 param rg_name string = resourceGroup().name
 
 var default_container_cmd = [
-  'rg-cleanup'
+  'rg-cleanup.sh'
   '--identity'
 ]
 var dryrun_cmd = [
@@ -27,9 +28,12 @@ var regex_cmd = [
   '--regex'
   regex
 ]
+var role_assignments_cmd = [
+  '--role-assignments'
+]
 var add_regex_cmd = concat(default_container_cmd, empty(regex) ? [] : regex_cmd)
 var add_ttl_cmd = concat(add_regex_cmd, empty(ttl) ? [] : ttl_cmd)
-var container_command = concat(add_ttl_cmd, dryrun ? dryrun_cmd : [])
+var container_command = concat(add_ttl_cmd, dryrun ? dryrun_cmd : [], role_assignments ? role_assignments_cmd : [])
 
 var encoded_sub = uriComponent(csubscription)
 var encoded_rg = uriComponent(rg_name)
