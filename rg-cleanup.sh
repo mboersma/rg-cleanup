@@ -13,10 +13,11 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Call resource group cleanup binary with its command-line arguments
-rg-cleanup "${args[@]}"
+./bin/rg-cleanup "${args[@]}"
 
 # Exit if not cleaning up unattached role assignments
 if [ "$role_assignments_flag" != true ]; then
+  echo "Skipping unattached role assignment cleanup..."
   exit 0
 fi
 
@@ -24,6 +25,7 @@ fi
 az login --identity
 az account set --subscription "${SUBSCRIPTION_ID}"
 
+echo "Cleaning up unattached role assignments..."
 QUERY=".[] | select(.scope == \"/subscriptions/${SUBSCRIPTION_ID}\" and .principalName==\"\") .id"
 for R_ID in $(az role assignment list --all --include-inherited -o json | jq -r "${QUERY}"); do
   echo "Deleting unattached role assignment: $R_ID"
