@@ -140,20 +140,6 @@ resource logic_app 'Microsoft.Logic/workflows@2017-07-01' = {
             }
           }
         }
-        Delay: {
-          runAfter: {
-            Create_or_update_a_container_group: [
-              'Succeeded'
-            ]
-          }
-          type: 'Wait'
-          inputs: {
-            interval: {
-              count: 1
-              unit: 'Minute'
-            }
-          }
-        }
         Delete_a_container_group: {
           runAfter: {
             Get_logs_from_a_container_instance: [
@@ -179,7 +165,7 @@ resource logic_app 'Microsoft.Logic/workflows@2017-07-01' = {
         }
         Get_logs_from_a_container_instance: {
           runAfter: {
-            Delay: [
+            Until: [
               'Succeeded'
             ]
           }
@@ -196,6 +182,106 @@ resource logic_app 'Microsoft.Logic/workflows@2017-07-01' = {
               'x-ms-api-version': '2019-12-01'
             }
           }
+        }
+        Get_properties_of_a_container_group: {
+          runAfter: {
+            Create_or_update_a_container_group: [
+              'Succeeded'
+            ]
+          }
+          type: 'ApiConnection'
+          inputs: {
+            host: {
+              connection: {
+                name: '@parameters(\'$connections\')[\'aci\'][\'connectionId\']'
+              }
+            }
+            method: 'get'
+            path: '${cg_id}'
+            queries: {
+              'x-ms-api-version': '2019-12-01'
+            }
+          }
+        }
+        Initialize_variable: {
+          runAfter: {
+            Get_properties_of_a_container_group: [
+              'Succeeded'
+            ]
+          }
+          type: 'InitializeVariable'
+          inputs: {
+            variables: [
+              {
+                name: 'complete'
+                type: 'string'
+                value: '@body(\'Get_properties_of_a_container_group\')?[\'properties\']?[\'instanceView\']?[\'state\']'
+              }
+            ]
+          }
+        }
+        Until: {
+          actions: {
+            Get_properties_of_a_container_group_loop: {
+              type: 'ApiConnection'
+              inputs: {
+                host: {
+                  connection: {
+                    name: '@parameters(\'$connections\')[\'aci\'][\'connectionId\']'
+                  }
+                }
+                method: 'get'
+                path: '${cg_id}'
+                queries: {
+                  'x-ms-api-version': '2019-12-01'
+                }
+              }
+            }
+            // this works because there is only one container in the group, otherwise it might overwrite the variable
+            For_each: {
+              foreach: '@body(\'Get_properties_of_a_container_group_loop\')[\'properties\'][\'containers\']'
+              actions: {
+                Set_variable: {
+                  type: 'SetVariable'
+                  inputs: {
+                    name: 'complete'
+                    value: '@items(\'For_each\')?[\'properties\']?[\'instanceView\']?[\'currentState\']?[\'state\']'
+                  }
+                }
+              }
+              runAfter: {
+                Get_properties_of_a_container_group_loop: [
+                  'Succeeded'
+                ]
+              }
+              type: 'Foreach'
+            }
+            Delay: {
+              runAfter: {
+                For_each: [
+                  'Succeeded'
+                ]
+              }
+              type: 'Wait'
+              inputs: {
+                interval: {
+                  count: 1
+                  unit: 'Minute'
+                }
+              }
+            }
+          }
+          runAfter: {
+            Initialize_variable: [
+              'Succeeded'
+            ]
+          }
+          expression: '@equals(variables(\'complete\'),\'Terminated\')'
+          limit: {
+            count: 60
+            timeout: 'PT1H'
+          }
+          type: 'Until'
         }
       }
       outputs: {
