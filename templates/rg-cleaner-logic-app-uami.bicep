@@ -307,7 +307,7 @@ resource logic_app 'Microsoft.Logic/workflows@2019-05-01' = {
   }
 }
 
-resource apiConnection 'Microsoft.Web/connections@2021-06-01' = {
+resource apiConnection 'Microsoft.Web/connections@2018-07-01-preview' = {
   name: aci
   kind: 'V1'
   location: location

@@ -25,8 +25,8 @@ fi
 az login --identity
 az account set --subscription "${SUBSCRIPTION_ID}"
 
-echo az role assignment list --scope "/subscriptions/$SUBSCRIPTION_ID"
-az role assignment list --scope "/subscriptions/$SUBSCRIPTION_ID"
+az role assignment list --scope "/subscriptions/$SUBSCRIPTION_ID" -o tsv
+az role assignment list --scope "/subscriptions/$SUBSCRIPTION_ID" -o tsv --query "[?principalName=='']"
 assignments=$(az role assignment list --scope "/subscriptions/$SUBSCRIPTION_ID" -o tsv --query "[?principalName==''].id")
 if [ -z "$assignments" ]; then
   echo "No unattached role assignments found."
