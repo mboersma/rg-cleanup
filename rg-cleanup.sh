@@ -25,8 +25,13 @@ fi
 az login --identity
 az account set --subscription "${SUBSCRIPTION_ID}"
 
-echo "Cleaning up unattached role assignments..."
+echo az role assignment list --scope "/subscriptions/$SUBSCRIPTION_ID"
+az role assignment list --scope "/subscriptions/$SUBSCRIPTION_ID"
 assignments=$(az role assignment list --scope "/subscriptions/$SUBSCRIPTION_ID" -o tsv --query "[?principalName==''].id")
-echo "Deleting role assignments:"
+if [ -z "$assignments" ]; then
+  echo "No unattached role assignments found."
+  exit 0
+fi
+echo "Deleting unattached role assignments:"
 echo "$assignments"
 xargs az role assignment delete --ids <<< "$assignments"

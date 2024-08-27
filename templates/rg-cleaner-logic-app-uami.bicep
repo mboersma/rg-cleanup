@@ -47,7 +47,7 @@ var cg_id = '${rg_id}/providers/Microsoft.ContainerInstance/containerGroups/${en
 var cn_id = '${cg_id}/containers/${encoded_cn}'
 var aci_api_id = '/subscriptions/${csubscription}/providers/Microsoft.Web/locations/${location}/managedApis/aci'
 
-resource logic_app 'Microsoft.Logic/workflows@2017-07-01' = {
+resource logic_app 'Microsoft.Logic/workflows@2019-05-01' = {
   name: logic_app_name
   location: location
   identity: {
@@ -197,7 +197,7 @@ resource logic_app 'Microsoft.Logic/workflows@2017-07-01' = {
               }
             }
             method: 'get'
-            path: '${cg_id}'
+            path: cg_id
             queries: {
               'x-ms-api-version': '2019-12-01'
             }
@@ -231,7 +231,7 @@ resource logic_app 'Microsoft.Logic/workflows@2017-07-01' = {
                   }
                 }
                 method: 'get'
-                path: '${cg_id}'
+                path: cg_id
                 queries: {
                   'x-ms-api-version': '2019-12-01'
                 }
@@ -307,7 +307,7 @@ resource logic_app 'Microsoft.Logic/workflows@2017-07-01' = {
   }
 }
 
-resource apiConnection 'Microsoft.Web/connections@2018-07-01-preview' = {
+resource apiConnection 'Microsoft.Web/connections@2021-06-01' = {
   name: aci
   kind: 'V1'
   location: location
