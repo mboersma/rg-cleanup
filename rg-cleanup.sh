@@ -26,8 +26,7 @@ az login --identity
 az account set --subscription "${SUBSCRIPTION_ID}"
 
 echo "Cleaning up unattached role assignments..."
-QUERY=".[] | select(.scope == \"/subscriptions/${SUBSCRIPTION_ID}\" and .principalName==\"\") .id"
-for R_ID in $(az role assignment list --all --include-inherited -o json | jq -r "${QUERY}"); do
-  echo "Deleting unattached role assignment: $R_ID"
-  az role assignment delete --ids $R_ID
-done
+assignments=$(az role assignment list --scope "/subscriptions/$SUBSCRIPTION_ID" -o tsv --query "[?principalName==''].id")
+echo "Deleting role assignments:"
+echo "$assignments"
+xargs az role assignment delete --ids <<< "$assignments"
